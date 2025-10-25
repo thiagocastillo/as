@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conquistarte</title>
+<style>
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: black;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none; /* Permite que los botones sean clickeables */
+}
+
+/* Paneles generales */
+.panel, .yes-panel, .no-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.1);
+    padding: 30px 20px;
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+    backdrop-filter: blur(10px);
+    z-index: 10; /* Más alto que el canvas */
+    max-width: 90%;
+    width: 90%;
+    box-sizing: border-box;
+}
+
+.panel h1, .yes-panel h1, .no-panel h1 {
+    font-size: 24px;
+    margin: 0;
+    word-wrap: break-word;
+}
+
+/* Botones */
+.btn {
+    padding: 12px 25px;
+    margin: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn:hover {
+    transform: scale(1.1);
+}
+
+.yes {
+    background-color: green;
+    color: white;
+}
+
+.no {
+    background-color: red;
+    color: white;
+}
+
+/* Pantalla Sí con corazones rebotando */
+.yes-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 2;
+}
+
+.yes-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Pantalla No */
+.no-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 2;
+}
+
+.no-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Media queries para móviles */
+@media screen and (max-width: 600px) {
+    .panel, .yes-panel, .no-panel {
+        padding: 20px 15px;
+    }
+
+    .panel h1, .yes-panel h1, .no-panel h1 {
+        font-size: 20px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+}
+</style>
+</head>
+<body>
+
+<canvas id="hearts"></canvas>
+
+<!-- Panel principal -->
+<div class="panel" id="main-panel">
+    <h1>¿Me das la oportunidad de conquistarte?</h1>
+    <button class="btn yes" id="btn-yes">Sí</button>
+    <button class="btn no" id="btn-no">No</button>
+</div>
+
+<!-- Pantalla Sí -->
+<div class="yes-screen" id="yes-screen">
+    <canvas id="yes-canvas"></canvas>
+    <div class="yes-panel">
+        <h1 id="yes-text">¡Gracias por darme la oportunidad! Prometo hacer todo para que salga bien.</h1>
+    </div>
+</div>
+
+<!-- Pantalla No -->
+<div class="no-screen" id="no-screen">
+    <div class="no-panel">
+        <h1 id="no-text">Entiendo tu decisión y la respeto. Gracias por tu tiempo y por leerme.</h1>
+    </div>
+</div>
+
+<script>
+// Corazones cayendo de fondo
+const canvas = document.getElementById('hearts');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
+class Heart {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height - canvas.height;
+        this.size = 10 + Math.random() * 20;
+        this.speed = 1 + Math.random() * 2;
+        this.angle = Math.random() * Math.PI * 2;
+        this.spin = (Math.random() - 0.5) * 0.02;
+    }
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = 'rgba(255, 105, 180, 0.8)';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(this.size/2, -this.size/2, this.size, this.size/3, 0, this.size);
+        ctx.bezierCurveTo(-this.size, this.size/3, -this.size/2, -this.size/2, 0, 0);
+        ctx.fill();
+        ctx.restore();
+    }
+    update() {
+        this.y += this.speed;
+        this.angle += this.spin;
+        if(this.y > canvas.height + this.size) {
+            this.y = -this.size;
+            this.x = Math.random() * canvas.width;
+        }
+    }
+}
+
+const hearts = [];
+for(let i=0;i<50;i++) hearts.push(new Heart());
+
+function animate(){
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    hearts.forEach(h => { h.update(); h.draw(); });
+    requestAnimationFrame(animate);
+}
+animate();
+
+// Funciones para mostrar pantallas usando addEventListener (más compatible)
+document.getElementById('btn-yes').addEventListener('click', () => {
+    document.getElementById('main-panel').style.display = 'none';
+    document.getElementById('yes-screen').style.display = 'block';
+    startFireworks();
+});
+
+document.getElementById('btn-no').addEventListener('click', () => {
+    document.getElementById('main-panel').style.display = 'none';
+    document.getElementById('no-screen').style.display = 'block';
+});
+
+// Corazones del Sí rebotando
+function startFireworks(){
+    const canvas = document.getElementById('yes-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+
+    class Particle{
+        constructor(x,y){
+            this.x = x;
+            this.y = y;
+            this.vx = (Math.random()-0.5)*12;
+            this.vy = (Math.random()-0.5)*12;
+            this.size = 8 + Math.random()*5;
+            this.gravity = 0.05;
+        }
+        draw(){
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.fillStyle = 'rgba(255,105,180,0.9)';
+            ctx.beginPath();
+            ctx.moveTo(0,0);
+            ctx.bezierCurveTo(this.size/2, -this.size/2, this.size, this.size/3, 0, this.size);
+            ctx.bezierCurveTo(-this.size, this.size/3, -this.size/2, -this.size/2,0,0);
+            ctx.fill();
+            ctx.restore();
+        }
+        update(){
+            this.vy += this.gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if(this.x <= 0 || this.x >= canvas.width) this.vx *= -1;
+            if(this.y <= 0 || this.y >= canvas.height) this.vy *= -1;
+        }
+    }
+
+    for(let i=0;i<150;i++){
+        particles.push(new Particle(canvas.width/2, canvas.height/2));
+    }
+
+    function animateFireworks(){
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animateFireworks);
+    }
+
+    animateFireworks();
+}
+</script>
+
+</body>
+</html>
